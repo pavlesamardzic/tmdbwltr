@@ -28,9 +28,9 @@ class MoviesViewModel {
         return movies[index]
     }
     
-    func fetchMovies() {
-        
-    }
+    func fetchMovies() {}
+    
+    func searchMovies(request: MovieSearchRequest) {}
     
     func calculateIndexPathsToReload(from newMovies: [Movie]) -> [IndexPath] {
         let startIndex = movies.count - newMovies.count

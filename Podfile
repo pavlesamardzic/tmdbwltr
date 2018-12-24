@@ -3,8 +3,5 @@ platform :ios, '10.0'
 use_frameworks!
 
 target 'TheMovieDB' do
-pod 'Alamofire', '~> 4.4'
 
-pod 'AlamofireImage', '~> 3.3'
-    
 end

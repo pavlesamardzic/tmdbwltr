@@ -15,8 +15,7 @@ class MoviesListViewController: UIViewController, AlertDisplayer {
         static let search = "SearchListCell"
     }
     @IBOutlet weak var tableView: UITableView!
-    //var site: String!
-    private var searchViewModel: SearchMoviesViewModel?
+    
     private var popularViewModel: PopularMoviesViewModel!
     
     private var shouldShowLoadingCell = false
@@ -26,7 +25,7 @@ class MoviesListViewController: UIViewController, AlertDisplayer {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        hideKeyboardWhenTappedAround()
         setupComponents()
         loadPopularMovies()
     }
@@ -37,22 +36,25 @@ class MoviesListViewController: UIViewController, AlertDisplayer {
         popularViewModel.fetchMovies()
     }
     
+    
     func startSearchWith(_ searchString: String) {
+        popularViewModel.currentPage = 1
+        popularViewModel.movies.removeAll()
+        popularViewModel.queri = searchString
+        
         let searchRequest = MovieSearchRequest.from(query: searchString)
-        searchViewModel = SearchMoviesViewModel(request: searchRequest, delegate: self)
-        searchViewModel?.fetchMovies()
+        viewModel().searchMovies(request: searchRequest)
     }
     
     func viewModel() -> MoviesViewModel {
-        if let searchViewModel = searchViewModel, searchViewModel.currentCount > 0 {
-            return searchViewModel
+        if let popularViewModel = popularViewModel, popularViewModel.currentCount > 0 {
+            return popularViewModel
         }
         return popularViewModel
     }
     
     func setupComponents() {
         
-        // setup search controller
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search Movies"
         navigationItem.searchController = searchController
@@ -60,51 +62,22 @@ class MoviesListViewController: UIViewController, AlertDisplayer {
         searchController.searchBar.delegate = self
         
         suggestions = UserDefaults.standard.array(forKey: "Suggestions") as? [String]
-    }
-}
-
-extension MoviesListViewController: SearchViewModelDelegate {
-    func onSearchFetchCompleted(with newIndexPathsToReload: [IndexPath]?) {
-        if (searchActive) {
-            return
-        }
-        
-        guard let newIndexPathsToReload = newIndexPathsToReload else {
-            //indicatorView.stopAnimating()
-            tableView.isHidden = false
-            tableView.reloadData()
-            return
-        }
-        // 2
-    
-        let indexPathsToReload = visibleIndexPathsToReload(intersecting: newIndexPathsToReload)
-        tableView.reloadRows(at: indexPathsToReload, with: .automatic)
-    }
-    
-    func onSearchFetchFailed(with reason: String) {
-        if (searchActive) {
-            return
-        }
-        
-        let title = "Warning".localizedString
-        let action = UIAlertAction(title: "OK".localizedString, style: .default)
-        displayAlert(with: title , message: reason, actions: [action])
+        tableView.keyboardDismissMode = .onDrag
     }
 }
 
 extension MoviesListViewController: PopularMoviesViewModelDelegate {
+    
     func onPopularFetchCompleted(with newIndexPathsToReload: [IndexPath]?) {
         if (searchActive) {
             return
         }
         
         guard let newIndexPathsToReload = newIndexPathsToReload else {
-            //indicatorView.stopAnimating()
             tableView.isHidden = false
             tableView.reloadData()
             return
         }
-        // 2
         
         let indexPathsToReload = visibleIndexPathsToReload(intersecting: newIndexPathsToReload)
         tableView.reloadRows(at: indexPathsToReload, with: .automatic)
@@ -119,13 +92,37 @@ extension MoviesListViewController: PopularMoviesViewModelDelegate {
         let action = UIAlertAction(title: "OK".localizedString, style: .default)
         displayAlert(with: title , message: reason, actions: [action])
     }
+    
+    func onSearchFetchCompleted(with newIndexPathsToReload: [IndexPath]?) {
+        if (searchActive) {
+            return
+        }
+        
+        guard newIndexPathsToReload != nil else {
+            tableView.isHidden = false
+            tableView.reloadData()
+            return
+        }
+        
+        //let indexPathsToReload = visibleIndexPathsToReload(intersecting: newIndexPathsToReload)
+    }
+    
+    func onSearchFetchFailed(with reason: String) {
+        if (searchActive) {
+            return
+        }
+        
+        let title = "Warning".localizedString
+        let action = UIAlertAction(title: "OK".localizedString, style: .default)
+        displayAlert(with: title , message: reason, actions: [action])
+    }
 }
 
 extension MoviesListViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // 1
+        
         if searchActive {
-            return suggestions?.count ?? 0;
+            return suggestions?.count ?? 0
         } else {
             return viewModel().totalCount
         }
@@ -160,7 +157,12 @@ extension MoviesListViewController: UITableViewDelegate {
 extension MoviesListViewController: UITableViewDataSourcePrefetching {
     func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
         if indexPaths.contains(where: isLoadingCell) {
-            viewModel().fetchMovies()
+            if (popularViewModel.isSearchActive){
+                let searchRequest = MovieSearchRequest.from(query: popularViewModel.queri)
+                viewModel().searchMovies(request: searchRequest)
+            } else {
+                viewModel().fetchMovies()
+            }
         }
     }
 }
@@ -206,6 +208,8 @@ extension MoviesListViewController: UISearchBarDelegate {
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        viewModel().currentPage = 1
+        
         setSearchActive(false)
         viewModel().movies.removeAll()
         tableView.reloadData()
@@ -216,5 +220,15 @@ extension MoviesListViewController: UISearchBarDelegate {
     func setSearchActive(_ active: Bool) {
         searchActive = active
         tableView.reloadData()
+    }
+    
+    func hideKeyboardWhenTappedAround() {
+        let tap: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(MoviesListViewController.dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
     }
 }

@@ -6,8 +6,8 @@
 //  Copyright © 2018. Pavle. All rights reserved.
 //
 
-import UIKit
-class SearchPredictionTableCell: UITableViewCell {
-    
-    @IBOutlet weak var labelPrediction: UILabel!
-}
+//import UIKit
+//class SearchPredictionTableCell: UITableViewCell {
+//    
+//    @IBOutlet weak var labelPrediction: UILabel!
+//}

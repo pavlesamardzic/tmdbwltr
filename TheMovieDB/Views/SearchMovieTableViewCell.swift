@@ -14,7 +14,6 @@ class SearchMovieTableViewCell: UITableViewCell {
     @IBOutlet weak var labelNameInSearch: UILabel!
     @IBOutlet weak var labelOverviewInSearch: UILabel!
     @IBOutlet weak var labelDateInSearch: UILabel!
-    
     @IBOutlet weak var searchBar: UISearchBar!
     
     override func prepareForReuse() {
@@ -24,9 +23,8 @@ class SearchMovieTableViewCell: UITableViewCell {
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        
     }
-
+    
     func onClickButtonSearch(_ sender: Any) {
         configure(with: .none)
     }

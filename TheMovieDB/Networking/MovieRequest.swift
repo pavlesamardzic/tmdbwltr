@@ -12,7 +12,6 @@ struct MovieRequest {
     var path: String {
         return "movie/popular"
     }
-
 }
 
 extension MovieRequest {

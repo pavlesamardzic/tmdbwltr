@@ -30,6 +30,6 @@ extension URLRequest {
             return encodedURLRequest
         } else {
             return self
-        }// 
+        }
     }
 }
